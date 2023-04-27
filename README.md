@@ -32,3 +32,48 @@ Reactのように、イベントハンドラを親から子に渡して親の状
 `input`などの入力要素で、入力した値をデータにバインドするためには`bind:value`を使う。Vueと比較すると、`props`にバインドができる点が違う。Reactと比較すると、`value`と`onChange`の両方を渡さなくて良くなるので、便利なような気がする。チュートリアルには「データの流れが分かりにくくなるので使用は控えめにしよう」と書かれていた。
 
 `bind:this`で、HTML要素やコンポーネントへの参照を取得できる。
+
+### 7. Store
+
+`.svelte`ファイルの外でリアクティブな値を作成するためには、ストアを使う。ストアは、複数のコンポーネントから同じ値を参照することもできる。
+
+ストアには、書き込みができる`writable`と、読み取りのみの`readable`がある。`readable`は、作成するときに更新関数を渡すAPIになっているので、ユーザーのアクションに応じて更新することはできない。
+
+Svelteのストアは、`subscribe`メソッドを正しく実装しているオブジェクトのことをいう。Readableはsubscribeメソッドのみをもち、Writableはそれに加えてsetとupdateメソッドをもつ。
+
+そのため、Reactのカスタムフックのようなものを作成することもできる。これをカスタムストアという。Readableなストアよりカスタムストアを使う機会の方が多い気がする。
+
+<details>
+<summary>カスタムストア</summary>
+
+```ts
+function createCount() {
+	const { subscribe, set, update } = writable(0);
+
+	return {
+		subscribe,
+		increment: () => update(n => n + 1),
+		decrement: () => update(n => n - 1),
+		reset: () => set(0)
+	};
+}
+```
+</details>
+
+<details>
+<summary>使用例</summary>
+
+```html
+<script>
+	import { count } from './stores';
+</script>
+
+<h1>The count is {$count}</h1>
+
+<button on:click={count.increment}>+</button>
+<button on:click={count.decrement}>-</button>
+<button on:click={count.reset}>reset</button>
+```
+</details>
+
+setメソッドを持つストアは、コンポーネントにバインドすることができる。
