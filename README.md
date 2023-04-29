@@ -19,6 +19,8 @@ Svelteのリアクティビティは代入によってトリガーされる。�
 
 scriptタグの中に書くのがSvelte独自の構文なので、例えばReactのHooksみたいなものを作ろうとすると、それはtsファイルに書けないのでどうするんだろうというのが気になった。
 
+→8. Storeに書かれていました
+
 ### 4~6
 
 制御構文には条件分岐（if）、ループ（each）、非同期（await）などがある。Svelteでは、制御構文の開始を`#`、継続を`:`、終了を`/`で表す。
@@ -33,7 +35,7 @@ Reactのように、イベントハンドラを親から子に渡して親の状
 
 `bind:this`で、HTML要素やコンポーネントへの参照を取得できる。
 
-### 7. Store
+### 8. Store
 
 `.svelte`ファイルの外でリアクティブな値を作成するためには、ストアを使う。ストアは、複数のコンポーネントから同じ値を参照することもできる。
 
@@ -77,3 +79,78 @@ function createCount() {
 </details>
 
 setメソッドを持つストアは、コンポーネントにバインドすることができる。
+
+### 14. コンポーネントの合成
+
+あるコンポーネントと別のコンポーネントを組み合わせるためにはスロットを使用します。スロットは、Reactでいうとchildrenです。スロットに名前をつけて、複数のスロットを使うこともできます。
+
+Reactでchildrenでコンポーネントを合成するときは、互いに影響を与えることはありません（互いに依存しない）。例えば、LayoutコンポーネントのchildrenにProfileコンポーネントを渡すとき、LayoutはProfileによらずLayoutのままで、Profileも同様です。
+
+```tsx
+<Layout>
+  <Profile />
+</Layout>
+```
+
+Svelteではスロットに対してPropsを渡すことができます。つまり、外側のコンポーネントの中にあるデータを、内側のコンポーネントで受け取れるということです。ReactのRenderPropsに相当します。
+
+<details>
+<summary>Slot props</summary>
+
+```html
+<!-- Hoverable.svelte -->
+<script lang="ts">
+	let hovering: boolean;
+
+	function enter() {
+		hovering = true;
+	}
+
+	function leave() {
+		hovering = false;
+	}
+</script>
+
+<div on:mouseenter={enter} on:mouseleave={leave}>
+	<slot {hovering} />
+</div>
+
+<!-- +page.svelte -->
+<Hoverable let:hovering>
+	<div class:active={hovering}>
+		{#if hovering}
+			<p>I am being hovered upon.</p>
+		{:else}
+			<p>Hover over me!</p>
+		{/if}
+	</div>
+</Hoverable>
+```
+
+</details>
+
+<details>
+<summary>Render props(React)</summary>
+
+```tsx
+type HoverableProps = {
+	children: (props: { hovering: boolean }) => JSX.Element;
+};
+
+const Hoverable = ({ children }: HoverableProps) => {
+	const hovering = useState(false);
+
+	return <div>{children({ hovering })}</div>;
+};
+
+const Page = () => {
+	return (
+		<Hoverable>
+			{(hovering) => (
+				<div>{hovering ? <p>I am being hovered upon.</p> : <p>Hover over me!</p>}</div>
+			)}
+		</Hoverable>
+	);
+};
+```
+</details>
